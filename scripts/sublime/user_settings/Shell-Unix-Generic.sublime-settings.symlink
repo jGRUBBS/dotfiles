@@ -1,9 +1,9 @@
 {
 	"extensions":
 	[
-		"sh",
-		"zsh",
 		"bash",
-		"symlink"
+		"symlink",
+		"sh",
+		"zsh"
 	]
 }

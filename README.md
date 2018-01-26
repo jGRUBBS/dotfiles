@@ -50,3 +50,6 @@ vlc, zeplin
 15. Start elasticsearch and add launch daemon
 #### Set Symlinks
 14. Symlink .zshrc
+
+## Todo
+- install SourceCodePro font and set as terminal font

@@ -1,11 +1,6 @@
 #!/bin/zsh
 
-external_ip=$(curl ipecho.net/plain 2>/dev/null)
-until [ ! -z "$external_ip" ]; do
-  # sometimes external_ip fails so we need to retry until we get a result 
-  external_ip=$(curl ipecho.net/plain 2>/dev/null)
-done
-
+external_ip=$($DOTFILE_PATH/functions/external_ip)
 identifier='Justin Home'
 sg_group_id='sg-f11c9395'
 add_new=0

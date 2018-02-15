@@ -1,2 +1,8 @@
 #!/bin/zsh
-curl ipecho.net/plain ; echo
+external_ip=$(curl ipecho.net/plain 2>/dev/null)
+until [ ! -z "$external_ip" ]; do
+  # sometimes external_ip fails so we need to retry until we get a result
+  external_ip=$(curl ipecho.net/plain 2>/dev/null)
+done
+
+echo $external_ip

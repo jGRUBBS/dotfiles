@@ -74,6 +74,7 @@ brew 'zsh-completions'
 brew 'zstd'
 
 cask 'air-video-server-hd'
+cask 'alfred'
 cask 'cyberduck'
 cask 'docker-toolbox'
 cask 'divvy'

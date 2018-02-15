@@ -1,0 +1,45 @@
+#!/bin/zsh
+
+external_ip=$(curl ipecho.net/plain 2>/dev/null)
+until [ ! -z "$external_ip" ]; do
+  # sometimes external_ip fails so we need to retry until we get a result 
+  external_ip=$(curl ipecho.net/plain 2>/dev/null)
+done
+
+identifier='Justin Home'
+sg_group_id='sg-f11c9395'
+add_new=0
+
+existing_rule=$(
+  aws ec2 describe-security-groups \
+    --group-ids $sg_group_id \
+    --query "SecurityGroups[*].IpPermissions[*].IpRanges[?not_null(Description) && contains(Description, '$identifier')]"
+)
+
+if echo $existing_rule | grep -q $identifier; then
+
+  old_ip=$(echo $existing_rule | jq '.[0][0][0].CidrIp')
+  if echo $old_ip | grep -q $external_ip; then
+    echo 'External IP address has not changed since last update'
+  else
+    echo 'External IP address has changed'
+    echo "Revoking old entry for $old_ip"
+    add_new=1
+    aws ec2 revoke-security-group-ingress \
+      --group-id $sg_group_id \
+      --ip-permissions "[{\"IpProtocol\": \"-1\", \"IpRanges\": [{\"CidrIp\": $old_ip}]}]"
+  fi
+
+else
+  echo "No entries found for this identifier: $identifier"
+  add_new=1
+fi
+
+if [ "$add_new" -eq "1" ]; then
+  echo "Adding new entry for: \"$external_ip/32\""
+  aws ec2 authorize-security-group-ingress \
+    --group-id $sg_group_id \
+    --ip-permissions "[{\"IpProtocol\": \"-1\", \"IpRanges\": [{\"CidrIp\": \"$external_ip/32\", \"Description\": \"$identifier\"}]}]"
+else
+  echo 'Nothing to update'
+fi

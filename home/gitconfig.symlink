@@ -4,15 +4,35 @@
 [hub]
   protocol = ssh
 [alias]
+  br = branch
+  ci = commit
   co = checkout
   st = status
+  chp = cherry-pick
+  df = diff
+  lg = log -p
   prune = fetch --prune
   undo = reset --soft HEAD^
   glog = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
 [core]
   editor = /usr/bin/vim
+  excludesfile = $HOME/.gitignore_global
 [status]
   showUntrackedFiles = all
 [user]
   name = Justin Grubbs
   email = justin@kingandpartners.com
+[color "status"]
+  added = yellow
+  changed = green
+  untracked = cyan
+[color "diff"]
+  meta = yellow bold
+  frag = magenta bold
+  old = red bold
+  new = green bold
+  whitespace = red reverse
+[color "branch"]
+  current = yellow reverse
+  local = yellow
+  remote = green

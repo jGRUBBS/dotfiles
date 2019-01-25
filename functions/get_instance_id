@@ -1,0 +1,12 @@
+#!/bin/zsh
+
+instance_id=$(
+  aws elasticbeanstalk describe-environment-resources \
+    --profile ab \
+    --region us-east-1 \
+    --environment-name $1 \
+    --query 'EnvironmentResources.Instances[0].Id' \
+    --output text
+)
+
+echo $instance_id

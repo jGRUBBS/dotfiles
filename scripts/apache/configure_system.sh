@@ -5,17 +5,17 @@
 
 marquee "Configure System Apache"
 
-if $(readlink /etc/apache2 &> /dev/null)
+if $(readlink /usr/local/etc/httpd &> /dev/null)
 then
   report "apache is already configured"
-elif [ -d /etc/apache2 ]
+elif [ -d /usr/local/etc/httpd ]
 then
-  report "moving original apache to /etc/apache2-old"
-  sudo mv /etc/apache2 /etc/apache2-old
+  report "moving original apache to /usr/local/etc/httpd-old"
+  sudo mv /usr/local/etc/httpd /usr/local/etc/httpd-old
 fi
 
-if [ ! -d /etc/apache2 ]
+if [ ! -d /usr/local/etc/httpd ]
 then
   report "linking apache"
-  link_file "$DOTFILE_PATH/apache" "/etc/apache2"
+  link_file "$DOTFILE_PATH/apache" "/usr/local/etc/httpd"
 fi

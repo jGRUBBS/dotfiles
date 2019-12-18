@@ -1,7 +1,9 @@
 #!/bin/bash
 
 . helper_scripts/print_format
+. $(brew --prefix nvm)/nvm.sh
 
-echo "installing node 0.12"
-nvm install 0.12
-report "node 0.12 installed successfully"
+echo "installing node"
+nvm use lts/dubnium
+nvm alias default lts/dubnium
+report "node installed successfully"

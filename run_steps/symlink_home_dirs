@@ -1,0 +1,12 @@
+#!/bin/bash
+
+. helper_scripts/print_format
+. helper_scripts/link_file
+
+marquee "Symlink Home directories"
+SYMDIRS=$(find home -type d -name '*.symlink')
+for symdir in $SYMDIRS
+do
+  dst="$HOME/.$(basename "${symdir%.*}")"
+  link_file "$(pwd)/$symdir" "$dst"
+done

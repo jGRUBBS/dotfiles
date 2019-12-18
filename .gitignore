@@ -11,3 +11,6 @@ config/*
 
 apache/original
 apache/extra
+
+home/tmux.symlink/plugins/*
+!home/tmux.symlink/plugins/.keep

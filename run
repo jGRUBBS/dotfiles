@@ -31,13 +31,8 @@ report_service "$(brew services start mysql)"
 report_service "$(brew services start redis)"
 report_service "$(brew services start elasticsearch)"
 
-marquee "Symlink Home Files"
-SYMLINKS=$(find home -type f -name '*.symlink')
-for symlink in $SYMLINKS
-do
-  dst="$HOME/.$(basename "${symlink%.*}")"
-  link_file "$(pwd)/$symlink" "$dst"
-done
+run_steps/symlink_home_files
+run_steps/symlink_home_dirs
 
 marquee "Symlink Config Files"
 SYMLINKS=$(find config -type f -name '*.symlink')

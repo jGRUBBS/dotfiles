@@ -3,7 +3,7 @@
 link_file () {
   echo "linking $1 -> $2"
   if [ -e "$2" ]; then
-    sudo rm "$2"
+    sudo rm -rf "$2"
   fi
   sudo ln -s "$1" "$2"
 }

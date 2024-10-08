@@ -1,0 +1,6 @@
+#!/bin/bash
+
+if [ "$PWD" = "$DOTFILE_PATH" ]; then
+  vscode/save_extensions
+  git add vscode/extensions
+fi

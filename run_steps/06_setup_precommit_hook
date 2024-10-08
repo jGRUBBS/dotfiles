@@ -1,0 +1,6 @@
+#!/bin/bash
+
+. helper_scripts/print_format
+
+marquee "Setup Pre-commit Hook"
+cp hooks/pre-commit .git/hooks/pre-commit

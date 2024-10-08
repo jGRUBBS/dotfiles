@@ -1,0 +1,6 @@
+#!/bin/sh
+
+. helper_scripts/print_format
+
+marquee "Saving VSCode extensions"
+code --list-extensions > "$DOTFILE_PATH/vscode/extensions"

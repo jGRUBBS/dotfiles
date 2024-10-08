@@ -1,0 +1,18 @@
+#!/bin/bash
+
+. helper_scripts/print_format
+. helper_scripts/link_file
+
+marquee "VSCode Setup"
+
+info "Symlinking Settings"
+link_file "$DOTFILE_PATH/vscode/settings.json" "$HOME/Library/Application Support/Code/User/settings.json"
+
+info "Symlinking Keybindings"
+link_file "$DOTFILE_PATH/vscode/keybindings.json" "$HOME/Library/Application Support/Code/User/keybindings.json"
+
+info "Symlinking Snippets"
+link_file "$DOTFILE_PATH/vscode/snippets" "$HOME/Library/Application Support/Code/User/snippets"
+
+info "Installing Extensions"
+$DOTFILE_PATH/vscode/install_extensions

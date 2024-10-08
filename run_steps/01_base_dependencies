@@ -1,0 +1,11 @@
+#!/bin/bash
+
+. helper_scripts/print_format
+. helper_scripts/link_file
+
+marquee "Base Dependencies"
+DEPENDENCIES=$(find dependency_scripts -type f -name '*.sh' | sort -n)
+for dependency in $DEPENDENCIES
+do
+  $dependency
+done

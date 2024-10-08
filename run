@@ -3,41 +3,8 @@
 . helper_scripts/print_format
 . helper_scripts/link_file
 
-marquee "Base Dependencies"
-DEPENDENCIES=$(find dependency_scripts -type f -name '*.sh')
-for dependency in $DEPENDENCIES
+RUN_STEPS=$(find run_steps -type f -name '*' | sort -n)
+for run_step in $RUN_STEPS
 do
-  $dependency
-done
-
-marquee "Brew Dependencies"
-cd home
-RESULTS=$(brew bundle | grep Success)
-note "$RESULTS"
-cd - > /dev/null 2>&1
-
-marquee "Useful System Scripts"
-SCRIPTS=$(find scripts -type f -name '*.sh')
-for script in $SCRIPTS
-do
-  $script
-done
-
-marquee "Configure Apache"
-# TODO
-
-marquee "Launch Services"
-report_service "$(brew services start mysql)"
-report_service "$(brew services start redis)"
-report_service "$(brew services start elasticsearch)"
-
-run_steps/symlink_home_files
-run_steps/symlink_home_dirs
-
-marquee "Symlink Config Files"
-SYMLINKS=$(find config -type f -name '*.symlink')
-for symlink in $SYMLINKS
-do
-  dst="$HOME/.$(basename "${symlink%.*}")"
-  link_file "$(pwd)/$symlink" "$dst"
+  $run_step
 done

@@ -17,11 +17,9 @@
 [core]
   editor = /usr/bin/vim
   excludesfile = $HOME/.gitignore_global
+  ignorecase = false
 [status]
   showUntrackedFiles = all
-[user]
-  name = Justin Grubbs
-  email = justin@kingandpartners.com
 [color "status"]
   added = yellow
   changed = green
@@ -36,3 +34,10 @@
   current = yellow reverse
   local = yellow
   remote = green
+[pull]
+  rebase = false
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true

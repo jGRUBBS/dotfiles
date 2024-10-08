@@ -1,5 +1,0 @@
-export PATH="/usr/local/opt/python/libexec/bin:$PATH"
-export PATH="/Users/justin/Library/Python/3.7/bin:$PATH"
-export PATH="/usr/local/opt/qt@5.5/bin:$PATH"
-export PATH="$DOTFILE_PATH/executables:$PATH"
-export PATH="$HOME/.cargo/bin:$PATH"

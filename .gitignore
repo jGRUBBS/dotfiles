@@ -14,3 +14,5 @@ apache/extra
 
 home/tmux.symlink/plugins/*
 !home/tmux.symlink/plugins/.keep
+
+node_modules

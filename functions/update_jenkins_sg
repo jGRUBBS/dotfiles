@@ -2,7 +2,7 @@
 
 external_ip=$($DOTFILE_PATH/functions/external_ip)
 identifier='Justin Home'
-sg_group_id='sg-f11c9395'
+sg_group_id='sg-08ab2e00f847a811b'
 add_new=0
 
 existing_rule=$(

@@ -1,0 +1,29 @@
+cask_args appdir: '/Applications'
+
+brew 'git-flow'
+brew 'hub'
+brew 'tmux'
+brew 'wget'
+brew 'zsh'
+brew 'zsh-completions'
+brew 'zstd'
+
+cask 'air-video-server-hd'
+cask 'cyberduck'
+cask 'google-chrome'
+cask 'harvest'
+cask 'ngrok'
+cask 'owncloud'
+cask 'postman'
+cask 'slack'
+cask 'spotify'
+cask 'tunnelblick'
+cask 'vlc'
+cask 'visual-studio-code'
+
+# Quick Look Plugins
+# see https://github.com/sindresorhus/quick-look-plugins for more info
+cask 'qlcolorcode'
+cask 'qlmarkdown'
+cask 'quicklook-csv'
+cask 'quicklook-json'

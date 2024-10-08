@@ -1,0 +1,8 @@
+#!/bin/bash
+
+docker run --rm -it \
+  --volume $HOME/.composer:/tmp \
+  --volume $PWD:/app \
+  --user $(id -u):$(id -g) \
+  composer \
+  sh -c "composer $*"

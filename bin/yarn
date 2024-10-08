@@ -1,0 +1,7 @@
+#!/bin/bash
+
+docker run --rm -it \
+  --workdir /app \
+  --volume $PWD:/app \
+  node \
+  sh -c "corepack yarn $*"

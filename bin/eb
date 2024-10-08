@@ -1,0 +1,6 @@
+#!/bin/bash
+
+docker run --rm -ti \
+  --volume $HOME/.aws:/root/.aws \
+  ph200/aws-eb-cli \
+  sh -c "eb $*"

@@ -1,0 +1,37 @@
+#!/bin/bash
+
+. helper_scripts/print_format
+
+marquee "Environment Variables"
+
+# if $DOTFILE_PATH is not set, we need to set it
+if [ -z "$DOTFILE_PATH" ]; then
+  read -r -p "Enter the path to your dotfiles: " DOTFILE_PATH
+  export DOTFILE_PATH
+  report "DOTFILES_PATH has been set"
+else
+  report "DOTFILES_PATH is already set"
+fi
+
+if [ -f $HOME/.localrc ]; then
+  report "Copying .localrc"
+  cp -f ~/.localrc $DOTFILE_PATH/config/localrc.symlink
+else
+  report "Creating .localrc"
+  touch $DOTFILE_PATH/config/localrc.symlink
+fi
+
+if ! grep -q "DOTFILE_PATH" $DOTFILE_PATH/config/localrc.symlink; then
+  echo "export DOTFILE_PATH=$DOTFILE_PATH" >> $DOTFILE_PATH/config/localrc.symlink
+  report "DOTFILES_PATH has been set"
+else
+  report "DOTFILES_PATH is already set"
+fi
+
+if ! grep -q "PROJECTS" $DOTFILE_PATH/config/localrc.symlink; then
+  read -r -p "Enter the path to your projects (your project folder that we can use \`c [tab]\` to navigate to): " PROJECTS
+  echo "export PROJECTS=$PROJECTS" >> $DOTFILE_PATH/config/localrc.symlink
+  report "PROJECTS has been set"
+else
+  report "PROJECTS is already set"
+fi

@@ -41,9 +41,8 @@ exec zsh
 
 ### 4. Connect Bitwarden Secrets Manager
 
-Bitwarden Secrets Manager is used for operational secrets. After rotating the
-credentials that were previously committed, store the replacement values as
-Bitwarden Secrets named:
+Bitwarden Secrets Manager stores the operational values. The shared project
+should contain these secrets:
 
 - `SUCURI_API_KEY`
 - `SUCURI_APP_KEY_CHARLESTONPLACE_COM`

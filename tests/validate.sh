@@ -15,14 +15,23 @@ check() {
   fi
 }
 
+matching_files() {
+  local pattern="$1"
+  if command -v rg >/dev/null 2>&1; then
+    rg -l --hidden \
+      --glob '!.git/**' \
+      --glob '!*.tmpl' \
+      "${pattern}"
+  else
+    git grep -Il -E "${pattern}" -- . ':(exclude)*.tmpl'
+  fi
+}
+
 bash_files=()
 while IFS= read -r file; do
   bash_files+=("${file}")
 done < <(
-  rg -l --hidden \
-    --glob '!.git/**' \
-    --glob '!*.tmpl' \
-    '^#!.*(/|[[:space:]])(bash|sh)([[:space:]]|$)' |
+  matching_files '^#!.*(/|[[:space:]])(bash|sh)([[:space:]]|$)' |
     sort -u
 )
 
@@ -36,10 +45,7 @@ zsh_files=()
 while IFS= read -r file; do
   zsh_files+=("${file}")
 done < <(
-  rg -l --hidden \
-    --glob '!.git/**' \
-    --glob '!*.tmpl' \
-    '^#!.*zsh' |
+  matching_files '^#!.*zsh' |
     sort -u
 )
 

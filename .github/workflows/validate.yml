@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install validation tools
-        run: brew install chezmoi shellcheck gitleaks
+        run: brew install chezmoi gitleaks python ripgrep shellcheck
       - name: Validate source
         run: ./tests/validate.sh
       - name: Scan full history

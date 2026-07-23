@@ -27,36 +27,51 @@ matching_files() {
   fi
 }
 
-bash_files=()
-while IFS= read -r file; do
-  bash_files+=("${file}")
-done < <(
-  matching_files '^#!.*(/|[[:space:]])(bash|sh)([[:space:]]|$)' |
-    sort -u
-)
+check_syntax() {
+  local shell_name="$1"
+  local pattern="$2"
+  local file
+  local found=0
+  local status=0
 
-check "bash syntax" bash -c '
-  for file in "$@"; do
-    bash -n "$file"
-  done
-' _ "${bash_files[@]}"
+  while IFS= read -r file; do
+    found=1
+    "${shell_name}" -n "${file}" || status=1
+  done < <(matching_files "${pattern}" | sort -u)
 
-zsh_files=()
-while IFS= read -r file; do
-  zsh_files+=("${file}")
-done < <(
-  matching_files '^#!.*zsh' |
-    sort -u
-)
+  if [[ "${found}" -eq 0 ]]; then
+    printf 'No %s files were discovered.\n' "${shell_name}" >&2
+    return 1
+  fi
+  return "${status}"
+}
 
-check "zsh syntax" zsh -c '
-  for file in "$@"; do
-    zsh -n "$file"
-  done
-' _ "${zsh_files[@]}"
+check_shellcheck() {
+  local file
+  local found=0
+  local status=0
+
+  while IFS= read -r file; do
+    found=1
+    shellcheck -x -e SC2016 "${file}" || status=1
+  done < <(
+    matching_files '^#!.*(/|[[:space:]])(bash|sh)([[:space:]]|$)' |
+      sort -u
+  )
+
+  if [[ "${found}" -eq 0 ]]; then
+    printf 'No Bash files were discovered for ShellCheck.\n' >&2
+    return 1
+  fi
+  return "${status}"
+}
+
+check "bash syntax" check_syntax \
+  bash '^#!.*(/|[[:space:]])(bash|sh)([[:space:]]|$)'
+check "zsh syntax" check_syntax zsh '^#!.*zsh'
 
 if command -v shellcheck >/dev/null 2>&1; then
-  check "shellcheck" shellcheck -x -e SC2016 "${bash_files[@]}"
+  check "shellcheck" check_shellcheck
 else
   printf 'SKIP: shellcheck is not installed\n'
 fi

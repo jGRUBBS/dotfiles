@@ -55,6 +55,22 @@ Create a separate access token for this Mac from a machine account with read
 access to the project containing those secrets. A per-device token can be
 revoked without disrupting other computers.
 
+To create the token:
+
+1. Open the Bitwarden web vault and select **Secrets Manager** from the product
+   switcher.
+2. Select **Machine accounts**, then create or open the machine account used
+   for dotfiles.
+3. In the **Projects** tab, give the machine account **Can read** access to the
+   shared project containing the secrets above.
+4. Open the **Access tokens** tab and select **Create access token**.
+5. Name the token after this Mac, choose an expiration, and create it.
+6. Copy the token before closing the window. Bitwarden cannot display it again
+   later. If it is lost, revoke it and create a replacement.
+
+See [Bitwarden's access-token documentation](https://bitwarden.com/help/secrets-manager-quick-start/#create-an-access-token)
+for the current interface.
+
 Save the token in macOS Keychain and verify secret retrieval:
 
 ```sh

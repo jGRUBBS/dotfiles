@@ -5,16 +5,41 @@ and Homebrew.
 
 ## New Mac
 
-Install the Xcode Command Line Tools if macOS asks for them, then run:
+### 1. Install Apple's command-line tools
+
+Start the installer:
+
+```sh
+xcode-select --install
+```
+
+Wait for it to finish before continuing.
+
+### 2. Bootstrap from GitHub
+
+Run:
 
 ```sh
 sh -c "$(curl -fsLS https://get.chezmoi.io)" -- \
   init --apply https://github.com/jGRUBBS/dotfiles.git
 ```
 
-The first apply installs Homebrew and the packages in
-`home/.chezmoitemplates/data/Brewfile`. Package installation and extension installation
-only rerun when their manifests change.
+The first apply installs Homebrew, command-line tools, applications, the zsh
+configuration and theme, VS Code settings and extensions, and portable AI
+configuration. It is safe to rerun the command if setup is interrupted.
+
+Package and extension installation only reruns when the corresponding manifest
+changes.
+
+### 3. Start the configured shell
+
+Open a new terminal window or reload the current shell:
+
+```sh
+exec zsh
+```
+
+### 4. Connect Bitwarden Secrets Manager
 
 Bitwarden Secrets Manager is used for operational secrets. After rotating the
 credentials that were previously committed, store the replacement values as
@@ -27,13 +52,40 @@ Bitwarden Secrets named:
 - `BROWSERSTACK_USERNAME`
 - `BROWSERSTACK_ACCESS_KEY`
 
-Then save the replacement BWS machine-account token in macOS Keychain:
+Create a separate access token for this Mac from a machine account with read
+access to the project containing those secrets. A per-device token can be
+revoked without disrupting other computers.
+
+Save the token in macOS Keychain and verify secret retrieval:
 
 ```sh
 dotfiles secrets bootstrap
+dotfiles secrets test
 ```
 
 The token is never written to the repository or a plaintext config file.
+
+### 5. Authenticate local applications
+
+Authentication state is intentionally not synchronized. Authenticate GitHub:
+
+```sh
+gh auth login
+```
+
+Then launch and sign in to Codex, Claude, GitHub Copilot, VS Code, Docker, and
+any other applications that require an account.
+
+### 6. Validate the installation
+
+Run:
+
+```sh
+dotfiles doctor
+```
+
+Resolve any reported failures before relying on the configuration. Warnings
+identify optional tools or authentication that still need attention.
 
 ## Daily use
 

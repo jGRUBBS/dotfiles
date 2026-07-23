@@ -11,11 +11,11 @@ jobs:
   static:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Install validation tools
-        run: brew install chezmoi gitleaks python ripgrep shellcheck
+        run: brew install chezmoi gitleaks python shellcheck
       - name: Validate source
         run: ./tests/validate.sh
       - name: Scan full history

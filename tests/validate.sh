@@ -17,14 +17,7 @@ check() {
 
 matching_files() {
   local pattern="$1"
-  if command -v rg >/dev/null 2>&1; then
-    rg -l --hidden \
-      --glob '!.git/**' \
-      --glob '!*.tmpl' \
-      "${pattern}"
-  else
-    git grep -Il -E "${pattern}" -- . ':(exclude)*.tmpl'
-  fi
+  git grep -Il -E "${pattern}" -- . ':(exclude)*.tmpl'
 }
 
 check_syntax() {

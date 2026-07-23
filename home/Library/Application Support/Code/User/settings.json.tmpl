@@ -1,0 +1,70 @@
+{
+  "vetur.grammar.customBlocks": {
+    "docs": "md",
+    "i18n": "json",
+    "page-query": "graphql",
+    "static-query": "graphql",
+  },
+  "phpcs.standard": "Wordpress",
+  "workbench.colorTheme": "Monokai Dimmed",
+  "mssql.connections": [],
+  "[python]": {
+    "editor.formatOnType": true,
+  },
+  "editor.inlineSuggest.enabled": true,
+  "files.associations": {
+    "authorized_keys": "apacheconf",
+  },
+  "php.executablePath": "{{ if eq .chezmoi.arch "arm64" }}/opt/homebrew/bin/php{{ else }}/usr/local/bin/php{{ end }}",
+  "github.copilot.editor.enableAutoCompletions": true,
+  "svelte.enable-ts-plugin": true,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false,
+  },
+  "editor.tabSize": 2,
+  "editor.formatOnSave": false,
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+  },
+  "security.workspace.trust.untrustedFiles": "open",
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+  },
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "docker.extension.enableComposeLanguageServer": false,
+  "search.exclude": {
+    "**/node_modules": false,
+  },
+  "[dockercompose]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "advanced",
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true,
+    },
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+  },
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+  },
+  "files.trimTrailingWhitespace": true,
+  "chat.viewSessions.orientation": "stacked",
+  "editor.minimap.enabled": false,
+  "editor.stickyScroll.enabled": false,
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+  },
+  "yaml.disableSchemaDetection": [
+    "**/.github/workflows/*.yml",
+    "**/.github/workflows/*.yaml",
+    "**/.gitea/workflows/*.yml",
+    "**/.gitea/workflows/*.yaml",
+    "**/.forgejo/workflows/*.yml",
+    "**/.forgejo/workflows/*.yaml",
+  ],
+}

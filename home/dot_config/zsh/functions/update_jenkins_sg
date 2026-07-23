@@ -1,0 +1,32 @@
+#!/usr/bin/env zsh
+
+set -e
+
+local external_ip identifier group_id existing_rule old_ip
+external_ip="$(external_ip)"
+identifier='Justin Home'
+group_id='sg-08ab2e00f847a811b'
+
+existing_rule="$(
+  aws ec2 describe-security-groups \
+    --group-ids "${group_id}" \
+    --query "SecurityGroups[*].IpPermissions[*].IpRanges[?Description=='${identifier}']"
+)"
+
+old_ip="$(jq -r 'first(.. | objects | .CidrIp? // empty)' <<<"${existing_rule}")"
+if [[ "${old_ip}" == "${external_ip}/32" ]]; then
+  print 'External IP address has not changed'
+  return 0
+fi
+
+if [[ -n "${old_ip}" ]]; then
+  aws ec2 revoke-security-group-ingress \
+    --group-id "${group_id}" \
+    --ip-permissions \
+    "[{\"IpProtocol\":\"-1\",\"IpRanges\":[{\"CidrIp\":\"${old_ip}\"}]}]"
+fi
+
+aws ec2 authorize-security-group-ingress \
+  --group-id "${group_id}" \
+  --ip-permissions \
+  "[{\"IpProtocol\":\"-1\",\"IpRanges\":[{\"CidrIp\":\"${external_ip}/32\",\"Description\":\"${identifier}\"}]}]"

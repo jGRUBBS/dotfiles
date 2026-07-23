@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+docker run --rm -it \
+  --workdir /app \
+  --volume "${PWD}:/app" \
+  --volume "${PWD}/.npm:/.npm" \
+  --volume "${PWD}/.cache:/.cache" \
+  node:20 \
+  npm "$@"

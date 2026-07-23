@@ -1,10 +1,23 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-. helper_scripts/print_format
-. helper_scripts/link_file
+set -euo pipefail
 
-RUN_STEPS=$(find run_steps -type f -name '*' | sort -n)
-for run_step in $RUN_STEPS
-do
-  $run_step
-done
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if ! command -v chezmoi >/dev/null 2>&1; then
+  install_dir="${HOME}/.local/bin"
+  mkdir -p "${install_dir}"
+  sh -c "$(curl -fsLS https://get.chezmoi.io)" -- -b "${install_dir}"
+  export PATH="${install_dir}:${PATH}"
+fi
+
+active_source="$(chezmoi source-path 2>/dev/null || true)"
+active_repo="$(
+  git -C "${active_source:-/nonexistent}" rev-parse --show-toplevel 2>/dev/null ||
+    true
+)"
+if [[ "${active_repo}" != "${repo_root}" ]]; then
+  chezmoi init --source "${repo_root}" --apply --verbose
+else
+  chezmoi apply --verbose
+fi

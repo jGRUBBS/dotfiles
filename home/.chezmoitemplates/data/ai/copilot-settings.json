@@ -1,0 +1,27 @@
+{
+  "renderMarkdown": true,
+  "theme": "auto",
+  "allowedUrls": [
+    "https://www.figma.com",
+    "https://api.figma.com",
+    "https://github.com",
+    "https://raw.githubusercontent.com",
+    "https://beta.auberge.com",
+    "https://auberge.com",
+    "http://auberge.local",
+    "http://localhost:3000",
+    "https://on.cypress.io",
+    "https://docs.cypress.io",
+    "https://packagist.org",
+    "https://api.wordpress.org",
+    "https://make.wordpress.org",
+    "https://getcomposer.org",
+    "https://dreffui1gbt6t.cloudfront.net",
+    "https://assets.juicer.io",
+    "https://boilerplate-beta-admin.kingandpartners.com",
+    "http://admin.kp-boilerplate.test",
+    "https://kp-boilerplate-beta-admin.kingandpartners.com",
+    "https://jgrubbs.errorgap.com"
+  ],
+  "model": "claude-opus-4.8"
+}

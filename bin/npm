@@ -1,8 +1,0 @@
-#!/bin/bash
-
-docker run --rm -it \
-  --workdir /app \
-  --volume $PWD:/app \
-  --user $(id -u):$(id -g) \
-  node \
-  sh -c "npm $*"

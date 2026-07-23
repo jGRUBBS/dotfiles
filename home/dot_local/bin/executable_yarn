@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+docker run --rm -it \
+  --workdir /app \
+  --volume "${PWD}:/app" \
+  node:20 \
+  corepack yarn "$@"

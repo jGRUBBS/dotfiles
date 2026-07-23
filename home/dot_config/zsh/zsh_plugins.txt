@@ -1,0 +1,4 @@
+ohmyzsh/ohmyzsh path:lib
+ohmyzsh/ohmyzsh path:plugins/git
+arialdomartini/oh-my-git
+arialdomartini/oh-my-git-themes path:oppa-lana-style.zsh-theme

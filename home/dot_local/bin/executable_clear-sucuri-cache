@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "$#" -ne 1 ]]; then
+  printf 'Usage: clear-sucuri-cache DOMAIN\n' >&2
+  exit 2
+fi
+
+case "$1" in
+  charlestonplace.com)
+    app_secret='SUCURI_APP_KEY_CHARLESTONPLACE_COM'
+    ;;
+  americangardenschs.com)
+    app_secret='SUCURI_APP_KEY_AMERICANGARDENSCHS_COM'
+    ;;
+  thecooper.com)
+    app_secret='SUCURI_APP_KEY_THECOOPER_COM'
+    ;;
+  *)
+    printf 'Unknown Sucuri site: %s\n' "$1" >&2
+    exit 1
+    ;;
+esac
+
+api_key="$(dotfiles-secret SUCURI_API_KEY)"
+app_key="$(dotfiles-secret "${app_secret}")"
+
+curl --fail --silent --show-error --get \
+  --data-urlencode "k=${api_key}" \
+  --data-urlencode "s=${app_key}" \
+  --data-urlencode 'a=clearcache' \
+  https://waf.sucuri.net/api

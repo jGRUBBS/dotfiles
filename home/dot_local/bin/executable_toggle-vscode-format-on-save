@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+source_file="$(chezmoi source-path \
+  "${HOME}/Library/Application Support/Code/User/settings.json")"
+if [[ ! -f "${source_file}" ]]; then
+  printf 'VS Code settings are not managed by chezmoi.\n' >&2
+  exit 1
+fi
+
+current="$(
+  sed -nE \
+    's/^[[:space:]]*"editor\.formatOnSave"[[:space:]]*:[[:space:]]*(true|false),?/\1/p' \
+    "${source_file}" |
+    head -n 1
+)"
+
+case "${current}" in
+  true) replacement=false ;;
+  false) replacement=true ;;
+  *)
+    printf 'Could not parse editor.formatOnSave.\n' >&2
+    exit 1
+    ;;
+esac
+
+sed -i '' -E \
+  "0,/\"editor\\.formatOnSave\"[[:space:]]*:[[:space:]]*(true|false)/s//\"editor.formatOnSave\": ${replacement}/" \
+  "${source_file}"
+chezmoi apply \
+  "${HOME}/Library/Application Support/Code/User/settings.json"
+printf 'editor.formatOnSave: %s -> %s\n' "${current}" "${replacement}"

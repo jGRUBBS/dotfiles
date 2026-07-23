@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+
+set -e
+
+local cert_dir cert_file key_file current_ip
+cert_dir="${HOME}/.localhost_ssl"
+cert_file="${cert_dir}/server.crt"
+key_file="${cert_dir}/server.key"
+current_ip="$(local_ip)"
+
+if [[ -f "${cert_file}" ]] &&
+  openssl x509 -noout -text -in "${cert_file}" | grep -Fq "${current_ip}"; then
+  print 'Local certificate already includes the current IP address.'
+  return 0
+fi
+
+mkdir -p "${cert_dir}"
+mkcert -cert-file "${cert_file}" -key-file "${key_file}" \
+  localhost "${current_ip}"

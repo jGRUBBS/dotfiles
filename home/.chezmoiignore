@@ -1,0 +1,6 @@
+{{- if ne .chezmoi.os "darwin" }}
+*
+{{- end }}
+
+.chezmoitemplates/
+zshrc.symlink

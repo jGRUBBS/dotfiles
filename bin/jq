@@ -1,7 +1,0 @@
-#!/bin/bash
-
-docker run --rm -it \
-  --volume $PWD:/app \
-  --workdir /app \
-  jetbrainsinfra/jq \
-  sh -c "jq $*"

@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+
+require "json"
+require "optparse"
+require "yaml"
+
+direction = nil
+OptionParser.new do |options|
+  options.banner = "Usage: yaml2json (--json|--yaml) INPUT OUTPUT"
+  options.on("-j", "--json", "Convert YAML input to JSON output") {
+    direction = :json
+  }
+  options.on("-y", "--yaml", "Convert JSON input to YAML output") {
+    direction = :yaml
+  }
+end.parse!
+
+abort "Expected INPUT and OUTPUT paths" unless ARGV.length == 2 && direction
+input, output = ARGV
+
+case direction
+when :json
+  value = YAML.safe_load(File.read(input), permitted_classes: [], aliases: true)
+  File.write(output, JSON.pretty_generate(value) + "\n")
+when :yaml
+  value = JSON.parse(File.read(input))
+  File.write(output, YAML.dump(value))
+end

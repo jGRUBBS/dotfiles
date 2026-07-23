@@ -1,0 +1,15 @@
+#!/usr/bin/env zsh
+
+local attempt external_ip
+for attempt in {1..5}; do
+  external_ip="$(curl --fail --silent --show-error --max-time 5 https://api.ipify.org 2>/dev/null)" &&
+    break
+  sleep "${attempt}"
+done
+
+if [[ -z "${external_ip:-}" ]]; then
+  print -u2 'Unable to determine external IP after 5 attempts'
+  return 1
+fi
+
+print -r -- "${external_ip}"

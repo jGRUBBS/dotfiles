@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+docker run --rm -it \
+  --volume "${HOME}/.composer:/tmp" \
+  --volume "${PWD}:/app" \
+  --user "$(id -u):$(id -g)" \
+  composer:2.8.9 \
+  composer "$@"

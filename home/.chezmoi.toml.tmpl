@@ -1,0 +1,13 @@
+sourceDir = {{ .chezmoi.sourceDir | quote }}
+
+[data]
+gitName = "Justin Grubbs"
+gitEmail = "justin@kingandpartners.com"
+projectsDir = {{ joinPath .chezmoi.homeDir "Projects" | quote }}
+
+[git]
+autoCommit = false
+autoPush = false
+
+[diff]
+exclude = ["scripts"]

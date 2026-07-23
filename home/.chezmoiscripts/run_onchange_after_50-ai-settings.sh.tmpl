@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# Codex checksum: {{ include ".chezmoitemplates/data/ai/codex-config.toml" | sha256sum }}
+# Claude checksum: {{ include ".chezmoitemplates/data/ai/claude-settings.json" | sha256sum }}
+# Copilot checksum: {{ include ".chezmoitemplates/data/ai/copilot-settings.json" | sha256sum }}
+# Merger schema version: 1
+set -euo pipefail
+
+source_dir={{ .chezmoi.sourceDir | quote }}
+repo="$(git -C "${source_dir}" rev-parse --show-toplevel)"
+python3 "${repo}/scripts/merge-codex-config.py" \
+  "${source_dir}/.chezmoitemplates/data/ai/codex-config.toml" \
+  "${HOME}/.codex/config.toml"
+python3 "${repo}/scripts/merge-json-config.py" \
+  "${source_dir}/.chezmoitemplates/data/ai/claude-settings.json" \
+  "${HOME}/.claude/settings.json"
+python3 "${repo}/scripts/merge-json-config.py" \
+  "${source_dir}/.chezmoitemplates/data/ai/copilot-settings.json" \
+  "${HOME}/.copilot/settings.json"

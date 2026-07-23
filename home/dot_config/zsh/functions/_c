@@ -1,0 +1,5 @@
+#compdef c
+
+if [[ -n "${PROJECTS:-}" ]]; then
+  _files -W "${PROJECTS}" -/
+fi

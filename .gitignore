@@ -1,18 +1,28 @@
-executables/*
-!executables/.keep
-!executables/yaml2json
-config/*
-!config/.keep
 *.DS_Store
+*.zwc
+__pycache__/
+.cache/
+.npm/
+node_modules/
 
-*localrc.symlink
+# Leftovers from the pre-chezmoi layout may contain local downloads and
+# generated state. Tracked legacy entries are removed by the migration.
+config/
+executables/
+home/tmux.symlink/
 
-*-apache.conf
+# Local validation and test output.
+.tmp/
+coverage/
 
-apache/original
-apache/extra
-
-home/tmux.symlink/plugins/*
-!home/tmux.symlink/plugins/.keep
-
-node_modules
+# Secrets and machine-local configuration must never be tracked.
+*.local
+*.local.json
+*.secret
+*.secrets
+.env
+.env.*
+!*.example
+home/dot_config/dotfiles/secrets.env
+home/dot_claude/settings.local.json
+home/dot_copilot/settings.local.json

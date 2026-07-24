@@ -24,8 +24,16 @@ brew "zsh-completions"
 cask "balenaetcher"
 cask "claude"
 cask "claude-code"
+
+# The OpenAI updater may install ChatGPT before Homebrew manages it. Avoid an
+# interactive administrator prompt when that existing app is already usable.
+chatgpt_is_installed = File.exist?("/Applications/ChatGPT.app")
+chatgpt_is_managed =
+  Dir.exist?("/opt/homebrew/Caskroom/chatgpt") ||
+  Dir.exist?("/usr/local/Caskroom/chatgpt")
+cask "chatgpt" unless chatgpt_is_installed && !chatgpt_is_managed
+
 cask "codex"
-cask "codex-app"
 cask "copilot-cli"
 cask "cyberduck"
 cask "docker-desktop"
@@ -42,6 +50,5 @@ cask "visual-studio-code"
 cask "vlc"
 cask "zoom"
 
-# Quick Look extensions still available through Homebrew.
+# Quick Look extension still available through Homebrew.
 cask "qlmarkdown"
-cask "quicklook-json"

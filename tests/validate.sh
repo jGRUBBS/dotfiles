@@ -59,6 +59,24 @@ check_shellcheck() {
   return "${status}"
 }
 
+check_script_templates() {
+  local file
+  local found=0
+  local status=0
+
+  while IFS= read -r file; do
+    found=1
+    chezmoi --source="${repo_root}/home" execute-template < "${file}" |
+      bash -n || status=1
+  done < <(git ls-files 'home/.chezmoiscripts/*.tmpl' | sort -u)
+
+  if [[ "${found}" -eq 0 ]]; then
+    printf 'No chezmoi script templates were discovered.\n' >&2
+    return 1
+  fi
+  return "${status}"
+}
+
 check "bash syntax" check_syntax \
   bash '^#!.*(/|[[:space:]])(bash|sh)([[:space:]]|$)'
 check "zsh syntax" check_syntax zsh '^#!.*zsh'
@@ -78,14 +96,20 @@ check "Codex portable TOML" python3 -c \
 check "AI config merge tests" python3 tests/test_merge.py
 
 if command -v brew >/dev/null 2>&1; then
-  check "Homebrew Bundle manifest" env HOMEBREW_NO_AUTO_UPDATE=1 \
+  check "Homebrew Bundle formula manifest" env HOMEBREW_NO_AUTO_UPDATE=1 \
     brew bundle list \
+    --file="${repo_root}/home/.chezmoitemplates/data/Brewfile"
+  check "Homebrew Bundle cask manifest" env HOMEBREW_NO_AUTO_UPDATE=1 \
+    brew bundle list \
+    --cask \
     --file="${repo_root}/home/.chezmoitemplates/data/Brewfile"
 else
   printf 'SKIP: Homebrew is not installed\n'
 fi
 
 if command -v chezmoi >/dev/null 2>&1; then
+  check "rendered chezmoi script syntax" check_script_templates
+
   temp_home="$(mktemp -d)"
   temp_source="$(mktemp -d)"
   trap 'rm -rf "${temp_home}" "${temp_source}"' EXIT

@@ -116,6 +116,21 @@ dotfiles doctor     # validate the installation
 
 The legacy `./run` entrypoint remains as a compatibility wrapper.
 
+## Intel Macs
+
+The bootstrap supports both Apple Silicon and Intel Macs. It selects Homebrew's
+standard prefix for the current architecture, downloads the matching Bitwarden
+Secrets Manager CLI binary, and uses architecture-specific application
+downloads where required.
+
+A 2018 Intel MacBook Pro should be updated to the latest available macOS
+Sequoia release before setup. Current package versions, including Docker
+Desktop, may not install on older macOS releases.
+
+Homebrew has announced that Intel support will become progressively more
+limited as Apple ends Intel macOS support. Run `dotfiles doctor` after setup,
+and expect application availability on Intel to change over time.
+
 ## AI configuration
 
 Only portable, human-owned configuration is synchronized:

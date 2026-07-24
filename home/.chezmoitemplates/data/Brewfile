@@ -3,6 +3,7 @@ cask_args appdir: "/Applications"
 tap "homebrew/bundle"
 
 brew "antidote"
+brew "awscli"
 brew "chezmoi"
 brew "gh"
 brew "git"
@@ -22,6 +23,7 @@ brew "zsh"
 brew "zsh-completions"
 
 cask "balenaetcher"
+cask "bitwarden"
 cask "claude"
 cask "claude-code"
 

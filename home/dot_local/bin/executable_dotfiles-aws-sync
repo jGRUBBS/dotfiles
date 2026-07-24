@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+umask 077
+
+usage() {
+  printf 'Usage: dotfiles-aws-sync [--optional|--check]\n' >&2
+  exit 2
+}
+
+mode="sync"
+case "${1:-}" in
+  "") ;;
+  --optional) mode="optional" ;;
+  --check) mode="check" ;;
+  *) usage ;;
+esac
+[[ "$#" -le 1 ]] || usage
+
+aws_dir="${HOME}/.aws"
+credentials_file="${aws_dir}/credentials"
+temp_file=""
+
+cleanup() {
+  if [[ -n "${temp_file}" && -f "${temp_file}" ]]; then
+    rm -f "${temp_file}"
+  fi
+}
+trap cleanup EXIT
+
+file_mode() {
+  if stat -f '%Lp' "$1" >/dev/null 2>&1; then
+    stat -f '%Lp' "$1"
+  else
+    stat -c '%a' "$1"
+  fi
+}
+
+validate_credentials() {
+  python3 - "$1" <<'PY'
+import configparser
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+parser = configparser.RawConfigParser(strict=True)
+try:
+    with path.open(encoding="utf-8") as handle:
+        parser.read_file(handle)
+except (OSError, UnicodeError, configparser.Error) as error:
+    print(f"AWS credentials are not valid INI: {error}", file=sys.stderr)
+    raise SystemExit(1)
+
+sections = parser.sections()
+if not sections:
+    print("AWS credentials must contain at least one profile.", file=sys.stderr)
+    raise SystemExit(1)
+
+required = ("aws_access_key_id", "aws_secret_access_key")
+invalid = [
+    section
+    for section in sections
+    if any(not parser.get(section, key, fallback="").strip() for key in required)
+]
+if invalid:
+    print(
+        "AWS credential profiles missing a static access key pair: "
+        + ", ".join(invalid),
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+PY
+}
+
+if [[ "${mode}" == "check" ]]; then
+  if [[ ! -f "${credentials_file}" ]]; then
+    printf 'AWS credentials are missing at %s\n' "${credentials_file}" >&2
+    exit 1
+  fi
+  if [[ "$(file_mode "${aws_dir}")" != "700" ]]; then
+    printf '%s must have permissions 700.\n' "${aws_dir}" >&2
+    exit 1
+  fi
+  if [[ "$(file_mode "${credentials_file}")" != "600" ]]; then
+    printf '%s must have permissions 600.\n' "${credentials_file}" >&2
+    exit 1
+  fi
+  validate_credentials "${credentials_file}"
+  printf 'AWS shared credentials are valid and permission-locked.\n'
+  exit 0
+fi
+
+secret_helper="${HOME}/.local/bin/dotfiles-secret"
+if [[ ! -x "${secret_helper}" ]]; then
+  if [[ "${mode}" == "optional" ]]; then
+    printf 'Skipping AWS credentials: dotfiles-secret is not installed yet.\n'
+    exit 0
+  fi
+  printf 'dotfiles-secret is not installed; run dotfiles apply.\n' >&2
+  exit 1
+fi
+
+credentials=""
+if [[ "${mode}" == "optional" ]]; then
+  if ! credentials="$("${secret_helper}" AWS_SHARED_CREDENTIALS 2>/dev/null)"; then
+    printf 'Skipping AWS credentials: Bitwarden is not connected or the secret is unavailable.\n'
+    exit 0
+  fi
+else
+  credentials="$("${secret_helper}" AWS_SHARED_CREDENTIALS)"
+fi
+
+mkdir -p "${aws_dir}"
+chmod 700 "${aws_dir}"
+temp_file="$(mktemp "${aws_dir}/.credentials.dotfiles.XXXXXX")"
+printf '%s\n' "${credentials}" > "${temp_file}"
+unset credentials
+chmod 600 "${temp_file}"
+validate_credentials "${temp_file}"
+
+if [[ -f "${credentials_file}" ]] && cmp -s "${temp_file}" "${credentials_file}"; then
+  chmod 600 "${credentials_file}"
+  printf 'AWS shared credentials are already current.\n'
+  exit 0
+fi
+
+if [[ -f "${credentials_file}" ]]; then
+  timestamp="$(date -u '+%Y%m%dT%H%M%SZ')"
+  backup_dir="${HOME}/.local/state/dotfiles/backups/${timestamp}/.aws"
+  mkdir -p "${backup_dir}"
+  chmod 700 "${backup_dir}"
+  cp "${credentials_file}" "${backup_dir}/credentials"
+  chmod 600 "${backup_dir}/credentials"
+  printf 'Backed up the previous AWS credentials under %s\n' \
+    "${HOME}/.local/state/dotfiles/backups/${timestamp}"
+fi
+
+mv -f "${temp_file}" "${credentials_file}"
+temp_file=""
+chmod 600 "${credentials_file}"
+printf 'Installed AWS shared credentials at %s\n' "${credentials_file}"

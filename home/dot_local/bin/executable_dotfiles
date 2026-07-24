@@ -13,6 +13,11 @@ Commands:
   doctor              Validate this Mac's setup
   secrets bootstrap   Save a BWS access token in macOS Keychain
   secrets test        Verify Bitwarden Secrets Manager access
+  aws sync            Install AWS credentials from Bitwarden
+  composer sync       Install Composer auth from Bitwarden
+  composer check      Validate Composer config and auth
+  ssh sync            Install selected SSH keys from Bitwarden
+  ssh check           Validate managed SSH keys and permissions
   vscode-extensions   Refresh the tracked VS Code extension manifest
 EOF
 }
@@ -41,6 +46,27 @@ bootstrap_secrets() {
     -w "${token}" >/dev/null
   unset token
   printf 'Stored the BWS token in macOS Keychain.\n'
+}
+
+test_secrets() {
+  local token
+  if ! command -v bws >/dev/null 2>&1; then
+    printf 'bws is not installed; run dotfiles apply.\n' >&2
+    exit 1
+  fi
+
+  token="$(security find-generic-password \
+    -a "${USER}" \
+    -s dotfiles-bws-access-token \
+    -w 2>/dev/null || true)"
+  if [[ -z "${token}" ]]; then
+    printf 'No BWS token is stored; run dotfiles secrets bootstrap.\n' >&2
+    exit 1
+  fi
+
+  BWS_ACCESS_TOKEN="${token}" bws secret list >/dev/null
+  unset token
+  printf 'Bitwarden Secrets Manager access is working.\n'
 }
 
 sync_dotfiles() {
@@ -97,8 +123,27 @@ case "${1:-}" in
   secrets)
     case "${2:-}" in
       bootstrap) bootstrap_secrets ;;
-      test) dotfiles-secret SUCURI_API_KEY >/dev/null &&
-        printf 'Bitwarden Secrets Manager access is working.\n' ;;
+      test) test_secrets ;;
+      *) usage; exit 2 ;;
+    esac
+    ;;
+  aws)
+    case "${2:-}" in
+      sync) "${HOME}/.local/bin/dotfiles-aws-sync" ;;
+      *) usage; exit 2 ;;
+    esac
+    ;;
+  composer)
+    case "${2:-}" in
+      sync) "${HOME}/.local/bin/dotfiles-composer-sync" ;;
+      check) "${HOME}/.local/bin/dotfiles-composer-sync" --check ;;
+      *) usage; exit 2 ;;
+    esac
+    ;;
+  ssh)
+    case "${2:-}" in
+      sync) "${HOME}/.local/bin/dotfiles-ssh-sync" ;;
+      check) "${HOME}/.local/bin/dotfiles-ssh-sync" --check ;;
       *) usage; exit 2 ;;
     esac
     ;;

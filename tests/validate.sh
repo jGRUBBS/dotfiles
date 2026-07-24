@@ -94,6 +94,9 @@ check "Copilot settings JSON" python3 -c \
 check "Codex portable TOML" python3 -c \
   'import pathlib,tomllib; tomllib.loads(pathlib.Path("home/.chezmoitemplates/data/ai/codex-config.toml").read_text())'
 check "AI config merge tests" python3 tests/test_merge.py
+check "AWS credentials sync tests" bash tests/test_aws_sync.sh
+check "Composer auth sync tests" bash tests/test_composer_sync.sh
+check "SSH private-key sync tests" bash tests/test_ssh_sync.sh
 
 if command -v brew >/dev/null 2>&1; then
   check "Homebrew Bundle formula manifest" env HOMEBREW_NO_AUTO_UPDATE=1 \

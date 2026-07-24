@@ -1,0 +1,33 @@
+{
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "roots/wordpress-core-installer": true
+        },
+        "optimize-autoloader": true,
+        "preferred-install": "dist"
+    },
+    "repositories": {
+        "kp-starter": {
+            "type": "vcs",
+            "url": "git@github.com:kingandpartners/kp-starter.git"
+        },
+        "yoast": {
+            "type": "composer",
+            "url": "https://my.yoast.com/packages/"
+        },
+        "advanced-custom-fields": {
+            "type": "composer",
+            "url": "https://connect.advancedcustomfields.com"
+        },
+        "elastic-press": {
+            "type": "vcs",
+            "url": "git@github.com:kingandpartners/elastic-press.git"
+        },
+        "wpackagist": {
+            "type": "composer",
+            "url": "https://wpackagist.org",
+            "only": ["wpackagist-plugin/*", "wpackagist-theme/*"]
+        }
+    }
+}

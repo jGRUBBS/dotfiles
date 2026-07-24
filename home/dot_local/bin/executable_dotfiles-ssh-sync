@@ -1,0 +1,316 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+umask 077
+
+usage() {
+  printf 'Usage: dotfiles-ssh-sync [--optional|--check]\n' >&2
+  exit 2
+}
+
+mode="sync"
+case "${1:-}" in
+  "") ;;
+  --optional) mode="optional" ;;
+  --check) mode="check" ;;
+  *) usage ;;
+esac
+[[ "$#" -le 1 ]] || usage
+
+ssh_dir="${HOME}/.ssh"
+stage_dir=""
+destinations=(
+  id_ed25519
+  id_rsa
+  kingandpartners-ab.pem
+  kingandpartners-gl.pem
+  king-admin-2023.pem
+)
+sources=(
+  id_ed25519
+  id_rsa
+  id_rsa
+  id_rsa
+  id_rsa
+)
+
+cleanup() {
+  if [[ -n "${stage_dir}" && -d "${stage_dir}" ]]; then
+    rm -rf "${stage_dir}"
+  fi
+}
+trap cleanup EXIT
+
+file_mode() {
+  if stat -f '%Lp' "$1" >/dev/null 2>&1; then
+    stat -f '%Lp' "$1"
+  else
+    stat -c '%a' "$1"
+  fi
+}
+
+public_key_body() {
+  awk 'NF >= 2 { print $1 " " $2; exit }' "$1"
+}
+
+validate_key_pair() {
+  local private_key="$1"
+  local public_key="$2"
+  local derived expected
+
+  if ! derived="$(ssh-keygen -y -P '' -f "${private_key}" 2>/dev/null)"; then
+    printf 'Unable to validate SSH private key for %s.\n' \
+      "$(basename "${private_key}")" >&2
+    return 1
+  fi
+  derived="$(printf '%s\n' "${derived}" | awk '{ print $1 " " $2 }')"
+  expected="$(public_key_body "${public_key}")"
+  if [[ -z "${expected}" || "${derived}" != "${expected}" ]]; then
+    printf 'SSH private key does not match %s.\n' \
+      "$(basename "${public_key}")" >&2
+    return 1
+  fi
+}
+
+needs_install() {
+  local staged_key="$1"
+  local installed_key="$2"
+
+  [[ ! -f "${installed_key}" ]] ||
+    [[ ! -O "${installed_key}" ]] ||
+    [[ "$(file_mode "${installed_key}")" != "600" ]] ||
+    ! cmp -s "${staged_key}" "${installed_key}"
+}
+
+check_installed() {
+  local index destination source missing=0
+
+  if [[ ! -d "${ssh_dir}" || "$(file_mode "${ssh_dir}")" != "700" ]]; then
+    printf '%s must exist with permissions 700.\n' "${ssh_dir}" >&2
+    return 1
+  fi
+  if [[ ! -f "${ssh_dir}/config" ||
+    "$(file_mode "${ssh_dir}/config")" != "600" ]]; then
+    printf '%s/config must exist with permissions 600.\n' "${ssh_dir}" >&2
+    return 1
+  fi
+  if [[ ! -f "${ssh_dir}/config.private" ]]; then
+    printf 'Managed private SSH config is missing: %s/config.private\n' \
+      "${ssh_dir}" >&2
+    missing=1
+  elif [[ ! -O "${ssh_dir}/config.private" ||
+    "$(file_mode "${ssh_dir}/config.private")" != "600" ]]; then
+    printf '%s/config.private must be user-owned with permissions 600.\n' \
+      "${ssh_dir}" >&2
+    return 1
+  elif ! ssh -G \
+    -F "${ssh_dir}/config" \
+    dotfiles-config-check >/dev/null 2>&1; then
+    printf 'Managed private SSH config is invalid.\n' >&2
+    return 1
+  elif ! ssh -G \
+    -F "${ssh_dir}/config.private" \
+    dotfiles-config-check >/dev/null 2>&1; then
+    printf 'Managed private SSH config is invalid.\n' >&2
+    return 1
+  fi
+
+  for index in "${!destinations[@]}"; do
+    destination="${destinations[${index}]}"
+    if [[ ! -f "${ssh_dir}/${destination}" ]]; then
+      printf 'Managed SSH key is missing: %s\n' "${destination}" >&2
+      missing=1
+    elif [[ ! -O "${ssh_dir}/${destination}" ]]; then
+      printf '%s must be owned by the current user.\n' \
+        "${ssh_dir}/${destination}" >&2
+      return 1
+    elif [[ "$(file_mode "${ssh_dir}/${destination}")" != "600" ]]; then
+      printf '%s must have permissions 600.\n' \
+        "${ssh_dir}/${destination}" >&2
+      return 1
+    fi
+  done
+  [[ "${missing}" -eq 0 ]] || return 3
+
+  for source in id_ed25519 id_rsa; do
+    if [[ ! -f "${ssh_dir}/${source}.pub" ]]; then
+      printf 'Managed SSH public key is missing: %s.pub\n' \
+        "${source}" >&2
+      return 1
+    fi
+    validate_key_pair \
+      "${ssh_dir}/${source}" \
+      "${ssh_dir}/${source}.pub" || return 1
+  done
+
+  for destination in \
+    kingandpartners-ab.pem \
+    kingandpartners-gl.pem \
+    king-admin-2023.pem; do
+    if ! cmp -s "${ssh_dir}/id_rsa" "${ssh_dir}/${destination}"; then
+      printf '%s is expected to be an alias of id_rsa.\n' \
+        "${destination}" >&2
+      return 1
+    fi
+  done
+
+  printf 'Managed SSH keys are valid and permission-locked.\n'
+}
+
+if [[ "${mode}" == "check" ]]; then
+  check_installed
+  exit
+fi
+
+mkdir -p "${ssh_dir}"
+chmod 700 "${ssh_dir}"
+
+# Lock down existing selected keys even if Bitwarden is not connected yet.
+for destination in "${destinations[@]}"; do
+  if [[ -f "${ssh_dir}/${destination}" ]]; then
+    if ! chmod 600 "${ssh_dir}/${destination}" 2>/dev/null; then
+      printf 'Existing SSH key needs ownership repair: %s\n' \
+        "${ssh_dir}/${destination}" >&2
+    fi
+  fi
+done
+
+secret_helper="${HOME}/.local/bin/dotfiles-secret"
+if [[ ! -x "${secret_helper}" ]]; then
+  if [[ "${mode}" == "optional" ]]; then
+    printf 'Skipping SSH key refresh: dotfiles-secret is not installed yet.\n'
+    exit 0
+  fi
+  printf 'dotfiles-secret is not installed; run dotfiles apply.\n' >&2
+  exit 1
+fi
+
+stage_dir="$(mktemp -d "${ssh_dir}/.dotfiles-ssh.XXXXXX")"
+chmod 700 "${stage_dir}"
+
+retrieve_secret() {
+  local secret_name="$1"
+  local output_file="$2"
+
+  if [[ "${mode}" == "optional" ]]; then
+    if ! "${secret_helper}" \
+      "${secret_name}" > "${output_file}" 2>/dev/null; then
+      return 1
+    fi
+  else
+    "${secret_helper}" "${secret_name}" > "${output_file}" || return 1
+  fi
+  chmod 600 "${output_file}"
+}
+
+if ! retrieve_secret \
+  SSH_PRIVATE_KEY_ID_ED25519 "${stage_dir}/id_ed25519"; then
+  if [[ "${mode}" == "optional" ]]; then
+    printf 'Skipping SSH key refresh: Bitwarden SSH secrets are unavailable.\n'
+    exit 0
+  fi
+  exit 1
+fi
+if ! retrieve_secret SSH_PRIVATE_KEY_ID_RSA "${stage_dir}/id_rsa"; then
+  if [[ "${mode}" == "optional" ]]; then
+    printf 'Skipping SSH key refresh: Bitwarden SSH secrets are unavailable.\n'
+    exit 0
+  fi
+  exit 1
+fi
+if ! retrieve_secret SSH_CONFIG_PRIVATE "${stage_dir}/config.private"; then
+  if [[ "${mode}" == "optional" ]]; then
+    printf 'Skipping SSH refresh: Bitwarden SSH secrets are unavailable.\n'
+    exit 0
+  fi
+  exit 1
+fi
+
+validate_key_pair \
+  "${stage_dir}/id_ed25519" \
+  "${ssh_dir}/id_ed25519.pub"
+validate_key_pair \
+  "${stage_dir}/id_rsa" \
+  "${ssh_dir}/id_rsa.pub"
+if grep -Eiq \
+  '^[[:space:]]*Include[[:space:]]+.*config\.private([[:space:]]|$)' \
+  "${stage_dir}/config.private"; then
+  printf 'SSH_CONFIG_PRIVATE must not include itself.\n' >&2
+  exit 1
+fi
+if ! ssh -G \
+  -F "${stage_dir}/config.private" \
+  dotfiles-config-check >/dev/null 2>&1; then
+  printf 'SSH_CONFIG_PRIVATE is not valid SSH configuration.\n' >&2
+  exit 1
+fi
+
+for index in "${!destinations[@]}"; do
+  destination="${destinations[${index}]}"
+  source="${sources[${index}]}"
+  cp "${stage_dir}/${source}" "${stage_dir}/install-${destination}"
+  chmod 600 "${stage_dir}/install-${destination}"
+done
+
+backup_dir=""
+if [[ -f "${ssh_dir}/config.private" ]] &&
+  needs_install \
+    "${stage_dir}/config.private" \
+    "${ssh_dir}/config.private"; then
+  timestamp="$(date -u '+%Y%m%dT%H%M%SZ')"
+  backup_dir="${HOME}/.local/state/dotfiles/backups/${timestamp}/.ssh"
+  mkdir -p "${backup_dir}"
+  chmod 700 "${backup_dir}"
+  cp "${ssh_dir}/config.private" "${backup_dir}/config.private"
+  chmod 600 "${backup_dir}/config.private"
+fi
+
+for destination in "${destinations[@]}"; do
+  if [[ -f "${ssh_dir}/${destination}" ]] &&
+    needs_install \
+      "${stage_dir}/install-${destination}" \
+      "${ssh_dir}/${destination}"; then
+    if [[ -z "${backup_dir}" ]]; then
+      timestamp="$(date -u '+%Y%m%dT%H%M%SZ')"
+      backup_dir="${HOME}/.local/state/dotfiles/backups/${timestamp}/.ssh"
+      mkdir -p "${backup_dir}"
+      chmod 700 "${backup_dir}"
+    fi
+    cp "${ssh_dir}/${destination}" "${backup_dir}/${destination}"
+    chmod 600 "${backup_dir}/${destination}"
+  fi
+done
+
+if [[ -n "${backup_dir}" ]]; then
+  printf 'Backed up previous SSH keys under %s\n' \
+    "$(dirname "${backup_dir}")"
+fi
+
+changed=0
+if needs_install \
+  "${stage_dir}/config.private" \
+  "${ssh_dir}/config.private"; then
+  mv -f "${stage_dir}/config.private" "${ssh_dir}/config.private"
+  changed=1
+fi
+chmod 600 "${ssh_dir}/config.private"
+
+for destination in "${destinations[@]}"; do
+  if needs_install \
+      "${stage_dir}/install-${destination}" \
+      "${ssh_dir}/${destination}"; then
+    mv -f \
+      "${stage_dir}/install-${destination}" \
+      "${ssh_dir}/${destination}"
+    changed=1
+  fi
+  chmod 600 "${ssh_dir}/${destination}"
+done
+
+if [[ "${changed}" -eq 1 ]]; then
+  printf 'Installed private SSH configuration and selected keys from Bitwarden.\n'
+else
+  printf 'Private SSH configuration and selected keys are already current.\n'
+fi
+
+check_installed >/dev/null

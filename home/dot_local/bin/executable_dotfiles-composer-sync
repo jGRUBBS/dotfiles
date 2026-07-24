@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+umask 077
+
+usage() {
+  printf 'Usage: dotfiles-composer-sync [--optional|--check]\n' >&2
+  exit 2
+}
+
+mode="sync"
+case "${1:-}" in
+  "") ;;
+  --optional) mode="optional" ;;
+  --check) mode="check" ;;
+  *) usage ;;
+esac
+[[ "$#" -le 1 ]] || usage
+
+composer_dir="${HOME}/.composer"
+config_file="${composer_dir}/config.json"
+auth_file="${composer_dir}/auth.json"
+temp_file=""
+
+cleanup() {
+  if [[ -n "${temp_file}" && -f "${temp_file}" ]]; then
+    rm -f "${temp_file}"
+  fi
+}
+trap cleanup EXIT
+
+file_mode() {
+  if stat -f '%Lp' "$1" >/dev/null 2>&1; then
+    stat -f '%Lp' "$1"
+  else
+    stat -c '%a' "$1"
+  fi
+}
+
+validate_json_object() {
+  local path="$1"
+  local label="$2"
+
+  if ! jq -e 'type == "object"' "${path}" >/dev/null 2>&1; then
+    printf '%s must be a valid JSON object.\n' "${label}" >&2
+    return 1
+  fi
+}
+
+check_installed() {
+  if [[ ! -d "${composer_dir}" ||
+    "$(file_mode "${composer_dir}")" != "700" ]]; then
+    printf '%s must exist with permissions 700.\n' "${composer_dir}" >&2
+    return 1
+  fi
+  for path in "${config_file}" "${auth_file}"; do
+    if [[ ! -f "${path}" ]]; then
+      printf 'Managed Composer file is missing: %s\n' "${path}" >&2
+      return 3
+    fi
+    if [[ ! -O "${path}" || "$(file_mode "${path}")" != "600" ]]; then
+      printf '%s must be user-owned with permissions 600.\n' "${path}" >&2
+      return 1
+    fi
+  done
+  validate_json_object "${config_file}" 'Composer config'
+  validate_json_object "${auth_file}" 'Composer auth'
+  printf 'Composer config and auth are valid and permission-locked.\n'
+}
+
+if [[ "${mode}" == "check" ]]; then
+  check_installed
+  exit
+fi
+
+mkdir -p "${composer_dir}"
+chmod 700 "${composer_dir}"
+
+secret_helper="${HOME}/.local/bin/dotfiles-secret"
+if [[ ! -x "${secret_helper}" ]]; then
+  if [[ "${mode}" == "optional" ]]; then
+    printf 'Skipping Composer auth: dotfiles-secret is not installed yet.\n'
+    exit 0
+  fi
+  printf 'dotfiles-secret is not installed; run dotfiles apply.\n' >&2
+  exit 1
+fi
+
+temp_file="$(mktemp "${composer_dir}/.auth.dotfiles.XXXXXX")"
+if [[ "${mode}" == "optional" ]]; then
+  if ! "${secret_helper}" \
+    COMPOSER_AUTH_JSON > "${temp_file}" 2>/dev/null; then
+    printf 'Skipping Composer auth: Bitwarden secret is unavailable.\n'
+    exit 0
+  fi
+else
+  "${secret_helper}" COMPOSER_AUTH_JSON > "${temp_file}"
+fi
+chmod 600 "${temp_file}"
+validate_json_object "${temp_file}" 'COMPOSER_AUTH_JSON'
+
+needs_install=0
+if [[ ! -f "${auth_file}" ]] ||
+  [[ ! -O "${auth_file}" ]] ||
+  [[ "$(file_mode "${auth_file}")" != "600" ]] ||
+  ! cmp -s "${temp_file}" "${auth_file}"; then
+  needs_install=1
+fi
+
+if [[ "${needs_install}" -eq 1 && -f "${auth_file}" ]]; then
+  timestamp="$(date -u '+%Y%m%dT%H%M%SZ')"
+  backup_dir="${HOME}/.local/state/dotfiles/backups/${timestamp}/.composer"
+  mkdir -p "${backup_dir}"
+  chmod 700 "${backup_dir}"
+  cp "${auth_file}" "${backup_dir}/auth.json"
+  chmod 600 "${backup_dir}/auth.json"
+  printf 'Backed up previous Composer auth under %s\n' \
+    "$(dirname "${backup_dir}")"
+fi
+
+if [[ "${needs_install}" -eq 1 ]]; then
+  mv -f "${temp_file}" "${auth_file}"
+  temp_file=""
+  chmod 600 "${auth_file}"
+  printf 'Installed Composer auth from Bitwarden.\n'
+else
+  printf 'Composer auth is already current.\n'
+fi
+
+check_installed >/dev/null

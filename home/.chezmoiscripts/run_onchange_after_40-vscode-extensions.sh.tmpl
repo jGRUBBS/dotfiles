@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # Extension manifest checksum: {{ include ".chezmoitemplates/data/vscode-extensions.txt" | sha256sum }}
+# Excluded extension checksum: {{ include ".chezmoitemplates/data/vscode-extensions-excluded.txt" | sha256sum }}
 set -euo pipefail
 
 if [[ -x /opt/homebrew/bin/brew ]]; then
@@ -15,6 +16,7 @@ if ! command -v code >/dev/null 2>&1; then
 fi
 
 manifest={{ joinPath .chezmoi.sourceDir ".chezmoitemplates/data/vscode-extensions.txt" | quote }}
+excluded_manifest={{ joinPath .chezmoi.sourceDir ".chezmoitemplates/data/vscode-extensions-excluded.txt" | quote }}
 installed="$(mktemp)"
 trap 'rm -f "${installed}"' EXIT
 code --list-extensions | tr '[:upper:]' '[:lower:]' | sort -u > "${installed}"
@@ -25,3 +27,11 @@ while IFS= read -r extension; do
     code --install-extension "${extension}"
   fi
 done < "${manifest}"
+
+code --list-extensions | tr '[:upper:]' '[:lower:]' | sort -u > "${installed}"
+while IFS= read -r extension; do
+  [[ -z "${extension}" || "${extension}" == \#* ]] && continue
+  if grep -Fqx "$(printf '%s' "${extension}" | tr '[:upper:]' '[:lower:]')" "${installed}"; then
+    code --uninstall-extension "${extension}"
+  fi
+done < "${excluded_manifest}"

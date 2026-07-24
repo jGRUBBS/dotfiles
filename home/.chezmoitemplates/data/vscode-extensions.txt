@@ -1,5 +1,4 @@
 bmewburn.vscode-intelephense-client
-browserstackcom.browserstack-accessibility-linter
 browserstackcom.browserstack-vscode
 christian-kohler.npm-intellisense
 coolbear.systemd-unit-file
